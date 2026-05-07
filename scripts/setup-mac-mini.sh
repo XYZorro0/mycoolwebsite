@@ -72,6 +72,24 @@ npm ci || npm install
 info "Building production bundle…"
 npm run build
 
+# --- 4b. (optional) DOOM shareware WAD ---------------------------------------
+WAD_PATH="public/games/doom1.wad"
+if [[ ! -f "$WAD_PATH" ]]; then
+  info "DOOM shareware WAD not found at $WAD_PATH"
+  read -r -p "Download it now? (~3 MB) [y/N] " yn
+  if [[ "$yn" =~ ^[Yy]$ ]]; then
+    mkdir -p public/games
+    if curl -fL --connect-timeout 8 -o "$WAD_PATH" \
+         https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad ||
+       curl -fL --connect-timeout 8 -o "$WAD_PATH" \
+         https://archive.org/download/DoomsharewareEpisode/doom1.wad; then
+      ok "Downloaded $WAD_PATH"
+    else
+      warn "Could not download doom1.wad. The DOOM app will show an error until you provide it."
+    fi
+  fi
+fi
+
 # --- 5. Start under PM2 -------------------------------------------------------
 mkdir -p logs
 if pm2 describe retro-portfolio >/dev/null 2>&1; then

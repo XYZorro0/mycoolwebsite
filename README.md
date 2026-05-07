@@ -29,11 +29,21 @@ manual setup, Docker, and reverse-proxy options.
 ## Stack
 
 - **Next.js 14** (App Router) + **React 18** + **TypeScript**
-- **Tailwind CSS** for styling, all chrome is CSS (no asset weight)
+- **Tailwind CSS** — all desktop chrome is CSS-only (no image assets shipped)
 - **Zustand** for the window-manager store
-- **Framer Motion** is allowed but only used where genuinely useful (kept off
-  the critical path)
+- **Framer Motion** for window enter/open transitions only
+- **Three.js** + **simplex-noise** — only loaded inside Voxelcraft, dynamically imported
+- **js-dos v8** — only loaded inside DOOM, dynamically imported from CDN
 - **WebAudio** synthesizes UI sounds — no audio files shipped
+
+## Personalize
+
+Open [`src/lib/profile.ts`](src/lib/profile.ts) and fill in your name, role, links,
+skills, and project list. Every app reads from there. Drop a real `resume.pdf`
+into `public/` and the Resume window will embed it automatically.
+
+For DOOM: drop the freely-redistributable shareware `doom1.wad` into
+[`public/games/`](public/games/README.md). See that folder's README for mirrors.
 
 ## Folder structure
 
@@ -42,39 +52,45 @@ mycoolwebsite/
 ├─ Dockerfile                    # multi-stage container for Mac Mini hosting
 ├─ ecosystem.config.cjs          # PM2 process file (memory-bounded restarts)
 ├─ next.config.mjs               # security headers, image config, package opt
-├─ tailwind.config.ts
-├─ postcss.config.js
-├─ tsconfig.json
+├─ scripts/
+│  └─ setup-mac-mini.sh          # one-shot installer for Mac Mini hosting
 ├─ public/
-│  ├─ robots.txt
-│  └─ resume.pdf                 # drop your real PDF here (optional)
+│  ├─ resume.pdf                 # (drop your real PDF here)
+│  └─ games/
+│     └─ doom1.wad               # (drop the shareware DOOM WAD here)
 └─ src/
    ├─ app/
    │  ├─ layout.tsx              # root layout, "skip to content" link
    │  ├─ page.tsx                # dynamic-imports the client Shell
-   │  └─ globals.css             # CRT scanlines, glassmorphism, reduced-motion
+   │  └─ globals.css             # Vista wallpaper + glass + CRT scanlines
    ├─ lib/
    │  ├─ apps.ts                 # registry — every app is its own dynamic chunk
-   │  ├─ store.ts                # Zustand: windows, focus, z-index, viewport
-   │  ├─ sound.ts                # WebAudio UI sfx (only on first user gesture)
+   │  ├─ store.ts                # Zustand: windows, focus, z-index, selection
+   │  ├─ sound.ts                # WebAudio UI sfx (lazy AudioContext)
+   │  ├─ profile.ts              # *** edit this *** all portfolio content
    │  └─ useVisibility.ts        # toggles `is-hidden` to pause CSS animations
    └─ components/
-      ├─ Shell.tsx               # top-level: boot vs desktop, mobile detection
-      ├─ BootSequence.tsx        # ~4.5s typing log, skippable
-      ├─ Desktop.tsx             # wallpaper + icon grid + window host
-      ├─ DesktopIcon.tsx         # inline-SVG icons (zero network cost)
-      ├─ Taskbar.tsx             # start menu, app indicators, sound toggle
+      ├─ Shell.tsx               # top-level: boot vs desktop, mobile, terminal bridge
+      ├─ BootSequence.tsx        # ~5s typing log → Vista welcome flash → desktop
+      ├─ Desktop.tsx             # Vista wallpaper + icon grid + window host
+      ├─ DesktopIcon.tsx         # vista-styled icon button + hover glow + selection
+      ├─ icons/VistaIcons.tsx    # all SVG icons (computer, folder, doom, mc, ...)
+      ├─ Taskbar.tsx             # start orb + start menu + open windows + clock
       ├─ Clock.tsx               # 30s timer, paused on hidden tabs
-      ├─ Window.tsx              # draggable window (rAF-batched pointer events)
+      ├─ Window.tsx              # draggable / 8-edge resizable / vista titlebar
       ├─ WindowHost.tsx          # renders open windows, lazy-loads each app
       ├─ MobileFallback.tsx      # simplified non-desktop UI
       └─ apps/
-         ├─ Resume.tsx
-         ├─ Projects.tsx         # next/image lazy loading
-         ├─ About.tsx
-         ├─ Contact.tsx
-         ├─ Doom.tsx             # iframe only mounts after explicit launch
-         └─ Minecraft.tsx        # DOM-based voxel grid (no canvas / WebGL)
+         ├─ Computer.tsx         # "My Computer" with fake drives
+         ├─ Resume.tsx           # PDF embed if present, else inline view
+         ├─ Projects.tsx         # cards w/ next/image lazy loading
+         ├─ About.tsx            # bio + skills + links
+         ├─ Games.tsx            # folder containing Doom + Voxelcraft
+         ├─ Contact.tsx          # email + clipboard copy + social links
+         ├─ Terminal.tsx         # interactive command prompt (open / ls / cowsay)
+         ├─ RecycleBin.tsx       # gag bin contents
+         ├─ Doom.tsx              # js-dos v8 (CDN script + WAD from /public/games)
+         └─ Minecraft.tsx         # Three.js voxel engine (chunks, raycast, fog)
 ```
 
 ## Running locally
@@ -108,14 +124,22 @@ zero.
 
 ### Animation & GPU
 
-- **No background canvas / WebGL / particle systems.** CRT scanlines are a
-  static repeating gradient. The vignette is a single radial gradient.
-- Window dragging is **rAF-batched**: pointer events accumulate into a ref and
-  commit once per frame, never thrashing React.
+- **The desktop has no background canvas / WebGL / particle system.** The Vista
+  aurora wallpaper is a stack of CSS gradients; the browser composites it once.
+- WebGL is **only** used inside the Voxelcraft window, and only after the user
+  clicks PLAY. Three.js, simplex-noise, and the engine code (~600 LOC) all
+  ship in a separate chunk that's never loaded otherwise.
+- The Voxelcraft render loop hooks `document.visibilitychange` and stops
+  `requestAnimationFrame` on hidden tabs. On window close, **all GL resources
+  (geometries, textures, materials, the renderer, the canvas element) are
+  disposed** — no GPU leak.
+- DOOM is js-dos v8. The script and CSS are downloaded on demand from a CDN.
+  On window close, `dos.stop()` tears down the DOSBox worker.
+- Window dragging and resizing are **rAF-batched**: pointer events accumulate
+  in a ref and commit once per frame, never thrashing React.
 - `prefers-reduced-motion` zeroes durations across the board.
 - `document.visibilitychange` toggles `html.is-hidden`, which sets
-  `animation-play-state: paused !important` on every `*::before/::after` —
-  scanlines and the boot caret stop entirely on backgrounded tabs.
+  `animation-play-state: paused !important` on every `*::before/::after`.
 
 ### Idle CPU
 
@@ -130,13 +154,14 @@ zero.
 
 ### Network & assets
 
-- All icons are **inline SVG** — zero network requests for desktop chrome.
-- All UI sounds are **synthesized** (no `.mp3`/`.wav` shipped).
-- `next/image` is used in Projects with `loading="lazy"` and AVIF/WebP.
+- All desktop icons are **inline SVG** — zero network requests for chrome.
+- All UI sounds are **synthesized** via WebAudio (no `.mp3`/`.wav` shipped).
+- Voxelcraft block textures are **procedurally generated** in a canvas at
+  runtime — no PNG atlases shipped.
+- `next/image` powers project screenshots with `loading="lazy"` and AVIF/WebP.
 - Static assets get `Cache-Control: public, max-age=31536000, immutable`.
-- Doom assets are not preloaded — the iframe only mounts when the user
-  clicks **LOAD DOOM**.
-- The Minecraft sandbox is a tiny DOM grid; nothing animates by itself.
+- DOOM: js-dos runtime + WAD only fetched on click.
+- Voxelcraft: Three.js + simplex-noise + the engine only loaded on click.
 
 ---
 
