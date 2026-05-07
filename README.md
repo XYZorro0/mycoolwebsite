@@ -6,6 +6,26 @@ sandbox. Built to sit on a Mac Mini at home and idle near zero CPU.
 
 ---
 
+## ⚡ One-shot Mac Mini install
+
+On the Mac Mini, after cloning the repo:
+
+```bash
+bash scripts/setup-mac-mini.sh
+```
+
+This installs Homebrew + Node 20 + PM2, builds the site, starts it under
+PM2 with a 350 MB memory cap, configures auto-start on boot, and tweaks
+energy settings so the Mac doesn't sleep. When it finishes you'll have:
+
+- `http://localhost:3000` on the Mac itself
+- `http://<mac-lan-ip>:3000` from any other device on your LAN
+
+See [Deployment — Mac Mini hosting](#deployment--mac-mini-hosting) below for
+manual setup, Docker, and reverse-proxy options.
+
+---
+
 ## Stack
 
 - **Next.js 14** (App Router) + **React 18** + **TypeScript**
