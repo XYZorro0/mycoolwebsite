@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+  background: #000;
+  color: #e6f2ff;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: var(--font-sans, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif);
+}
+
+/* CRT scanlines overlay — pure CSS, GPU-cheap */
+.crt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.03) 0,
+    rgba(255, 255, 255, 0.03) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: overlay;
+}
+.crt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 60%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+/* Vista-ish glass panel */
+.glass {
+  background: linear-gradient(
+    180deg,
+    rgba(60, 110, 180, 0.45) 0%,
+    rgba(20, 40, 70, 0.55) 100%
+  );
+  border: 1px solid rgba(180, 220, 255, 0.35);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+}
+
+.titlebar {
+  background: linear-gradient(
+    180deg,
+    rgba(120, 170, 230, 0.55) 0%,
+    rgba(40, 80, 140, 0.65) 100%
+  );
+  border-bottom: 1px solid rgba(180, 220, 255, 0.35);
+}
+
+.taskbar {
+  background: linear-gradient(
+    180deg,
+    rgba(20, 36, 60, 0.85) 0%,
+    rgba(8, 16, 32, 0.95) 100%
+  );
+  border-top: 1px solid rgba(150, 200, 255, 0.35);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+}
+
+.btn-orb {
+  background: radial-gradient(circle at 30% 30%, #cfe7ff 0%, #5aa3e8 45%, #1c4f8a 100%);
+  box-shadow: 0 0 12px rgba(127, 211, 255, 0.55), inset 0 0 8px rgba(255, 255, 255, 0.25);
+}
+
+.icon-tile {
+  transition: transform 120ms ease, background-color 120ms ease;
+}
+.icon-tile:hover,
+.icon-tile:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateZ(0) scale(1.02);
+}
+
+/* Pause heavy animations when document is hidden (set by JS) */
+html.is-hidden *,
+html.is-hidden *::before,
+html.is-hidden *::after {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+  }
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(150, 200, 255, 0.35);
+  border-radius: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
