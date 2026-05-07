@@ -1,94 +1,72 @@
 "use client";
 
 import { memo, useCallback } from "react";
-import { useDesktop } from "@/lib/store";
+import { useDesktop, type AppId } from "@/lib/store";
 import { sfx } from "@/lib/sound";
-import type { AppId } from "@/lib/store";
+import {
+  ComputerIcon,
+  ResumeIcon,
+  ProjectsIcon,
+  AboutIcon,
+  GamesIcon,
+  ContactIcon,
+  TerminalIcon,
+  RecycleBinIcon,
+  DoomIcon,
+  MinecraftIcon,
+} from "./icons/VistaIcons";
 
-type Props = {
-  label: string;
-  appId: AppId;
-  onActivate: () => void;
+const ICON_MAP: Record<AppId, React.ComponentType<{ size?: number }>> = {
+  computer: ComputerIcon,
+  resume: ResumeIcon,
+  projects: ProjectsIcon,
+  about: AboutIcon,
+  games: GamesIcon,
+  contact: ContactIcon,
+  terminal: TerminalIcon,
+  recyclebin: RecycleBinIcon,
+  doom: DoomIcon,
+  minecraft: MinecraftIcon,
 };
 
-function Glyph({ appId }: { appId: AppId }) {
-  // Inline SVG icons — zero network cost, themable.
-  const common = "h-8 w-8 drop-shadow";
-  switch (appId) {
-    case "resume":
-      return (
-        <svg viewBox="0 0 24 24" className={common} aria-hidden="true">
-          <rect x="4" y="2" width="14" height="20" rx="2" fill="#e7f3ff" />
-          <path d="M14 2v5h5" fill="none" stroke="#3b6cb0" />
-          <path d="M7 9h7M7 12h10M7 15h10M7 18h6" stroke="#3b6cb0" />
-        </svg>
-      );
-    case "projects":
-      return (
-        <svg viewBox="0 0 24 24" className={common} aria-hidden="true">
-          <path d="M3 7h7l2 2h9v10H3z" fill="#f3c761" stroke="#7a5b14" />
-          <path d="M3 7v-2h6l2 2" fill="#ffd97a" stroke="#7a5b14" />
-        </svg>
-      );
-    case "about":
-      return (
-        <svg viewBox="0 0 24 24" className={common} aria-hidden="true">
-          <circle cx="12" cy="9" r="3.5" fill="#cfe7ff" stroke="#3b6cb0" />
-          <path d="M5 20c1.5-3.5 4.5-5 7-5s5.5 1.5 7 5" fill="#cfe7ff" stroke="#3b6cb0" />
-        </svg>
-      );
-    case "contact":
-      return (
-        <svg viewBox="0 0 24 24" className={common} aria-hidden="true">
-          <rect x="3" y="6" width="18" height="12" rx="1.5" fill="#e7f3ff" stroke="#3b6cb0" />
-          <path d="M3 7l9 7 9-7" fill="none" stroke="#3b6cb0" />
-        </svg>
-      );
-    case "doom":
-      return (
-        <svg viewBox="0 0 24 24" className={common} aria-hidden="true">
-          <rect x="2" y="4" width="20" height="14" rx="1.5" fill="#1a0a0a" stroke="#7a1414" />
-          <text
-            x="12"
-            y="14"
-            textAnchor="middle"
-            fontFamily="ui-monospace, monospace"
-            fontSize="6"
-            fill="#ff4747"
-            fontWeight="900"
-          >
-            DOOM
-          </text>
-        </svg>
-      );
-    case "minecraft":
-      return (
-        <svg viewBox="0 0 24 24" className={common} aria-hidden="true">
-          <rect x="3" y="6" width="18" height="14" fill="#7ec84a" stroke="#3a6a1f" />
-          <rect x="3" y="6" width="18" height="4" fill="#3a6a1f" />
-          <rect x="6" y="12" width="3" height="3" fill="#5e9d36" />
-          <rect x="11" y="14" width="3" height="3" fill="#5e9d36" />
-          <rect x="15" y="11" width="3" height="3" fill="#5e9d36" />
-        </svg>
-      );
-  }
-}
+type Props = {
+  appId: AppId;
+  label: string;
+  onActivate: () => void;
+  size?: number;
+  /** When true, render as a "list" item (used inside folder windows). */
+  variant?: "desktop" | "folder";
+};
 
-function DesktopIconComponent({ label, appId, onActivate }: Props) {
+function IconInner({ appId, label, onActivate, size = 56, variant = "desktop" }: Props) {
   const audioEnabled = useDesktop((s) => s.audioEnabled);
+  const selected = useDesktop((s) => s.selectedIcon === appId);
+  const setSelected = useDesktop((s) => s.setSelectedIcon);
+
+  const Glyph = ICON_MAP[appId];
+
   const onHover = useCallback(() => {
     if (audioEnabled) sfx.hover();
   }, [audioEnabled]);
 
+  const onClick = useCallback(() => {
+    setSelected(appId);
+  }, [appId, setSelected]);
+
+  const onDouble = useCallback(() => {
+    onActivate();
+  }, [onActivate]);
+
   return (
     <li>
       <button
-        className="icon-tile group flex w-24 flex-col items-center gap-1 rounded-md px-2 py-2 text-center text-[12px] font-medium text-white outline-none focus-visible:ring-2 focus-visible:ring-[#7fd3ff]"
-        onDoubleClick={onActivate}
-        onClick={(e) => {
-          // Accessibility: single-click activation when keyboard-focused via Enter
-          if (e.detail === 0) onActivate();
-        }}
+        data-desktop-icon
+        className={
+          "vista-icon-hover group flex w-[88px] flex-col items-center gap-1 rounded-md px-2 py-2 text-center outline-none focus-visible:ring-2 focus-visible:ring-[#7fd3ff] " +
+          (selected ? "vista-icon-selected" : "")
+        }
+        onClick={onClick}
+        onDoubleClick={onDouble}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -97,12 +75,27 @@ function DesktopIconComponent({ label, appId, onActivate }: Props) {
         }}
         onMouseEnter={onHover}
         aria-label={`Open ${label}`}
+        title={`Double-click to open ${label}`}
       >
-        <Glyph appId={appId} />
-        <span className="leading-tight drop-shadow-[0_1px_0_rgba(0,0,0,0.6)]">{label}</span>
+        <Glyph size={size} />
+        <span
+          className={
+            "leading-tight " +
+            (variant === "desktop"
+              ? "text-[12px] font-medium text-white"
+              : "text-[12px] text-[#0a1f3a]")
+          }
+          style={
+            variant === "desktop"
+              ? { textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 4px rgba(0,0,0,0.55)" }
+              : undefined
+          }
+        >
+          {label}
+        </span>
       </button>
     </li>
   );
 }
 
-export default memo(DesktopIconComponent);
+export default memo(IconInner);

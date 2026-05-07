@@ -4,13 +4,12 @@ import { useDesktop } from "@/lib/store";
 import { APPS } from "@/lib/apps";
 import { Suspense, lazy, useMemo } from "react";
 import Window from "./Window";
+import type { AppId } from "@/lib/store";
 
-// Build a map of lazy components on first render. The actual JS chunk
-// is only fetched when the window mounts, not before.
 function useAppLoaders() {
   return useMemo(() => {
-    const map: Partial<Record<keyof typeof APPS, ReturnType<typeof lazy>>> = {};
-    (Object.keys(APPS) as (keyof typeof APPS)[]).forEach((k) => {
+    const map: Partial<Record<AppId, ReturnType<typeof lazy>>> = {};
+    (Object.keys(APPS) as AppId[]).forEach((k) => {
       map[k] = lazy(APPS[k].load);
     });
     return map;
@@ -32,8 +31,8 @@ export default function WindowHost() {
           <Window key={id} id={id}>
             <Suspense
               fallback={
-                <div className="flex h-full items-center justify-center text-sm text-white/60">
-                  loading…
+                <div className="flex h-full items-center justify-center text-sm text-[#3a4d6c]">
+                  Loading…
                 </div>
               }
             >

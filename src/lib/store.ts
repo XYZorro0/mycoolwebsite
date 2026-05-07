@@ -3,7 +3,17 @@
 import { create } from "zustand";
 import type { ComponentType } from "react";
 
-export type AppId = "resume" | "projects" | "about" | "contact" | "doom" | "minecraft";
+export type AppId =
+  | "computer"
+  | "resume"
+  | "projects"
+  | "about"
+  | "games"
+  | "contact"
+  | "terminal"
+  | "recyclebin"
+  | "doom"
+  | "minecraft";
 
 export type WindowState = {
   id: string;
@@ -16,7 +26,6 @@ export type WindowState = {
   minimized: boolean;
   maximized: boolean;
   z: number;
-  // Pre-maximize bounds (for restore)
   prev?: { x: number; y: number; w: number; h: number };
 };
 
@@ -24,7 +33,6 @@ type AppMeta = {
   id: AppId;
   title: string;
   defaultSize: { w: number; h: number };
-  // Lazy-loaded component (dynamic import done by registry)
   load: () => Promise<{ default: ComponentType<Record<string, unknown>> }>;
 };
 
@@ -36,10 +44,12 @@ type Store = {
   booted: boolean;
   reducedMotion: boolean;
   audioEnabled: boolean;
+  selectedIcon: AppId | null;
 
   setBooted: (b: boolean) => void;
   setReducedMotion: (b: boolean) => void;
   setAudioEnabled: (b: boolean) => void;
+  setSelectedIcon: (id: AppId | null) => void;
 
   open: (app: AppMeta) => void;
   close: (id: string) => void;
@@ -47,7 +57,7 @@ type Store = {
   minimize: (id: string) => void;
   toggleMaximize: (id: string, viewport: { w: number; h: number }) => void;
   move: (id: string, x: number, y: number) => void;
-  resize: (id: string, w: number, h: number) => void;
+  resize: (id: string, w: number, h: number, x?: number, y?: number) => void;
 };
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
@@ -62,10 +72,12 @@ export const useDesktop = create<Store>((set, get) => ({
   booted: false,
   reducedMotion: false,
   audioEnabled: false,
+  selectedIcon: null,
 
   setBooted: (b) => set({ booted: b }),
   setReducedMotion: (b) => set({ reducedMotion: b }),
   setAudioEnabled: (b) => set({ audioEnabled: b }),
+  setSelectedIcon: (id) => set({ selectedIcon: id }),
 
   open: (app) => {
     const existing = Object.values(get().windows).find((w) => w.appId === app.id);
@@ -82,9 +94,9 @@ export const useDesktop = create<Store>((set, get) => ({
     const z = get().zCounter + 1;
     const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
     const vh = typeof window !== "undefined" ? window.innerHeight : 800;
-    const w = Math.min(app.defaultSize.w, Math.floor(vw * 0.9));
+    const w = Math.min(app.defaultSize.w, Math.floor(vw * 0.92));
     const h = Math.min(app.defaultSize.h, Math.floor(vh * 0.85));
-    const offset = (openCount % 6) * 24;
+    const offset = (openCount % 6) * 28;
     const x = clamp(Math.floor((vw - w) / 2) + offset, 12, vw - w - 12);
     const y = clamp(Math.floor((vh - h) / 2) - 24 + offset, 12, vh - h - 60);
     const win: WindowState = {
@@ -110,11 +122,16 @@ export const useDesktop = create<Store>((set, get) => ({
   close: (id) =>
     set((s) => {
       const { [id]: _gone, ...rest } = s.windows;
+      void _gone;
       const order = s.order.filter((x) => x !== id);
+      const top = order
+        .map((wid) => rest[wid])
+        .filter((w) => w && !w.minimized)
+        .sort((a, b) => b!.z - a!.z)[0];
       return {
         windows: rest,
         order,
-        focusId: order.length ? order[order.length - 1] : null,
+        focusId: top ? top.id : null,
       };
     }),
 
@@ -134,7 +151,21 @@ export const useDesktop = create<Store>((set, get) => ({
     set((s) => {
       const win = s.windows[id];
       if (!win) return s;
-      return { windows: { ...s.windows, [id]: { ...win, minimized: !win.minimized } } };
+      const minimized = !win.minimized;
+      // re-focus the next visible top window when minimizing the current focus
+      let focusId = s.focusId;
+      if (minimized && s.focusId === id) {
+        const next = s.order
+          .filter((wid) => wid !== id)
+          .map((wid) => s.windows[wid])
+          .filter((w) => w && !w.minimized)
+          .sort((a, b) => b!.z - a!.z)[0];
+        focusId = next ? next.id : null;
+      }
+      return {
+        windows: { ...s.windows, [id]: { ...win, minimized } },
+        focusId,
+      };
     }),
 
   toggleMaximize: (id, viewport) =>
@@ -160,7 +191,7 @@ export const useDesktop = create<Store>((set, get) => ({
             x: 0,
             y: 0,
             w: viewport.w,
-            h: viewport.h - 48, // taskbar
+            h: viewport.h - 48,
           },
         },
       };
@@ -173,10 +204,15 @@ export const useDesktop = create<Store>((set, get) => ({
       return { windows: { ...s.windows, [id]: { ...win, x, y } } };
     }),
 
-  resize: (id, w, h) =>
+  resize: (id, w, h, x, y) =>
     set((s) => {
       const win = s.windows[id];
       if (!win) return s;
-      return { windows: { ...s.windows, [id]: { ...win, w, h } } };
+      return {
+        windows: {
+          ...s.windows,
+          [id]: { ...win, w, h, x: x ?? win.x, y: y ?? win.y },
+        },
+      };
     }),
 }));

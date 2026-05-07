@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { PROFILE } from "@/lib/profile";
 
 export default function Contact() {
   const [copied, setCopied] = useState(false);
-  const email = "you@example.com";
-
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(email);
+      await navigator.clipboard.writeText(PROFILE.email);
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch {
@@ -16,68 +15,61 @@ export default function Contact() {
     }
   };
 
-  return (
-    <div className="p-5 text-sm text-white/90">
-      <h2 className="font-mono text-[12px] uppercase tracking-widest text-[#7fd3ff]/80">
-        contact
-      </h2>
-      <p className="mt-3 text-white/80">
-        Want to work together, say hi, or trade boot screen screenshots? Reach out:
-      </p>
+  const links: { label: string; href: string }[] = [
+    PROFILE.github && { label: "GitHub", href: PROFILE.github },
+    PROFILE.linkedin && { label: "LinkedIn", href: PROFILE.linkedin },
+    PROFILE.twitter && { label: "Twitter / X", href: PROFILE.twitter },
+    PROFILE.bluesky && { label: "Bluesky", href: PROFILE.bluesky },
+    PROFILE.website && { label: "Website", href: PROFILE.website },
+  ].filter(Boolean) as { label: string; href: string }[];
 
-      <div className="mt-4 flex items-center gap-2 rounded border border-white/15 bg-white/5 px-3 py-2 font-mono text-[13px]">
-        <span className="select-all">{email}</span>
-        <button
-          className="ml-auto rounded border border-white/15 px-2 py-0.5 text-[11px] hover:bg-white/10"
-          onClick={copy}
-          aria-live="polite"
-        >
-          {copied ? "copied!" : "copy"}
-        </button>
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 border-b border-[#a8c4e8] bg-gradient-to-b from-[#eef5ff] to-[#cfe0f5] px-3 py-1 text-[12px] text-[#0a1f3a]">
+        <span>✉ Contact</span>
       </div>
 
-      <ul className="mt-4 grid grid-cols-2 gap-2 text-[12px]">
-        <li>
-          <a
-            className="block rounded border border-white/10 bg-white/5 p-2 hover:bg-white/10"
-            href="https://github.com/"
-            target="_blank"
-            rel="noreferrer noopener"
+      <div className="flex-1 overflow-auto p-5 text-[13px] text-[#0a1f3a]">
+        <p className="mb-3">
+          The fastest way to reach me is email. I read everything, and I usually reply within a
+          day or two.
+        </p>
+
+        <div className="flex items-center gap-2 rounded border border-[#a8c4e8] bg-white px-3 py-2 font-mono text-[13px] text-[#0a3a78]">
+          <span className="select-all">{PROFILE.email}</span>
+          <button
+            className="ml-auto rounded border border-[#7da5d8] bg-gradient-to-b from-white to-[#cee] px-2 py-0.5 text-[11px] hover:brightness-105"
+            onClick={copy}
+            aria-live="polite"
           >
-            GitHub ↗
-          </a>
-        </li>
-        <li>
+            {copied ? "copied!" : "copy"}
+          </button>
           <a
-            className="block rounded border border-white/10 bg-white/5 p-2 hover:bg-white/10"
-            href="https://www.linkedin.com/"
-            target="_blank"
-            rel="noreferrer noopener"
+            className="rounded border border-[#7da5d8] bg-gradient-to-b from-white to-[#cee] px-2 py-0.5 text-[11px] hover:brightness-105"
+            href={`mailto:${PROFILE.email}`}
           >
-            LinkedIn ↗
+            mail
           </a>
-        </li>
-        <li>
-          <a
-            className="block rounded border border-white/10 bg-white/5 p-2 hover:bg-white/10"
-            href="https://x.com/"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            X / Twitter ↗
-          </a>
-        </li>
-        <li>
-          <a
-            className="block rounded border border-white/10 bg-white/5 p-2 hover:bg-white/10"
-            href="https://bsky.app/"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            Bluesky ↗
-          </a>
-        </li>
-      </ul>
+        </div>
+
+        <h2 className="mt-5 mb-2 border-b border-[#cfd8e6] pb-1 text-[12px] font-bold uppercase tracking-widest text-[#0a3a78]">
+          Elsewhere
+        </h2>
+        <ul className="grid grid-cols-2 gap-2">
+          {links.map((l) => (
+            <li key={l.label}>
+              <a
+                className="block rounded border border-[#a8c4e8] bg-white px-3 py-2 text-[#0a3a78] hover:bg-[#eef5ff]"
+                href={l.href}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                {l.label} ↗
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

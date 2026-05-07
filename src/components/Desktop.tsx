@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect } from "react";
 import { useDesktop } from "@/lib/store";
-import { APP_LIST } from "@/lib/apps";
+import { APPS, DESKTOP_ICONS } from "@/lib/apps";
 import { sfx } from "@/lib/sound";
 import DesktopIcon from "./DesktopIcon";
 import Taskbar from "./Taskbar";
@@ -11,37 +11,39 @@ import WindowHost from "./WindowHost";
 export default function Desktop() {
   const open = useDesktop((s) => s.open);
   const audioEnabled = useDesktop((s) => s.audioEnabled);
+  const setSelected = useDesktop((s) => s.setSelectedIcon);
 
-  const wallpaperStyle = useMemo(
-    () => ({
-      backgroundImage:
-        "radial-gradient(1200px 700px at 30% 20%, rgba(80,140,220,0.55), transparent 60%)," +
-        "radial-gradient(900px 500px at 80% 80%, rgba(40,80,160,0.55), transparent 65%)," +
-        "linear-gradient(180deg, #0b1830 0%, #061224 60%, #03070f 100%)",
-    }),
-    []
-  );
+  // Click on empty desktop deselects icons.
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (!t.closest("[data-desktop-icon]") && !t.closest("[data-window]")) {
+        setSelected(null);
+      }
+    };
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, [setSelected]);
 
   return (
     <div
-      className="crt relative h-full w-full select-none"
-      style={wallpaperStyle}
-      aria-label="Desktop"
+      id="desktop"
+      className="vista-wallpaper relative h-full w-full select-none overflow-hidden"
+      aria-label="Vista desktop"
     >
-      {/* desktop icons grid */}
       <ul
         className="absolute left-3 top-3 grid auto-rows-min grid-cols-1 gap-2"
         role="list"
         aria-label="Desktop icons"
       >
-        {APP_LIST.map((app) => (
+        {DESKTOP_ICONS.map((appId) => (
           <DesktopIcon
-            key={app.id}
-            label={app.iconLabel}
-            appId={app.id}
+            key={appId}
+            appId={appId}
+            label={APPS[appId].iconLabel}
             onActivate={() => {
               if (audioEnabled) sfx.open();
-              open(app);
+              open(APPS[appId]);
             }}
           />
         ))}
