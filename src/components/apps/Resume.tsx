@@ -58,19 +58,24 @@ export default function Resume() {
               <p>{RESUME.summary}</p>
             </Section>
 
-            <Section title="Experience">
-              <ul className="space-y-2">
-                {RESUME.experience.map((e, i) => (
-                  <li key={i} className="grid grid-cols-[1fr_auto] gap-2">
-                    <div>
-                      <div className="font-semibold">{e.role}</div>
-                      <div className="text-[#3a4d6c]">{e.company}</div>
-                    </div>
-                    <div className="text-right text-[12px] text-[#3a4d6c]">{e.period}</div>
-                  </li>
-                ))}
-              </ul>
-            </Section>
+            {RESUME.experience.length > 0 && (
+              <Section title="Experience">
+                <ul className="space-y-2">
+                  {RESUME.experience.map((e, i) => (
+                    <li key={i} className="grid grid-cols-[1fr_auto] gap-2">
+                      <div>
+                        <div className="font-semibold">{e.role}</div>
+                        <div className="text-[#3a4d6c]">{e.company}</div>
+                        {e.detail && (
+                          <div className="text-[12px] text-[#3a4d6c]">{e.detail}</div>
+                        )}
+                      </div>
+                      <div className="text-right text-[12px] text-[#3a4d6c]">{e.period}</div>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
 
             <Section title="Skills">
               <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
@@ -90,12 +95,34 @@ export default function Resume() {
                     <div>
                       <div className="font-semibold">{e.degree}</div>
                       <div className="text-[#3a4d6c]">{e.school}</div>
+                      {e.detail && (
+                        <div className="text-[12px] text-[#3a4d6c]">{e.detail}</div>
+                      )}
                     </div>
                     <div className="text-right text-[12px] text-[#3a4d6c]">{e.period}</div>
                   </li>
                 ))}
               </ul>
             </Section>
+
+            {RESUME.certifications.length > 0 && (
+              <Section title="Certifications">
+                <ul className="space-y-2">
+                  {RESUME.certifications.map((c, i) => (
+                    <li key={i} className="grid grid-cols-[1fr_auto] gap-2">
+                      <div>
+                        <div className="font-semibold">{c.name}</div>
+                        <div className="text-[#3a4d6c]">{c.issuer}</div>
+                        {c.detail && (
+                          <div className="text-[12px] text-[#3a4d6c]">{c.detail}</div>
+                        )}
+                      </div>
+                      <div className="text-right text-[12px] text-[#3a4d6c]">{c.period}</div>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
 
             <p className="mt-6 text-[11px] text-[#3a4d6c]">
               Drop a real <code>resume.pdf</code> into <code>/public</code> and this view will

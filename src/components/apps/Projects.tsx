@@ -40,8 +40,20 @@ export default function Projects() {
                 />
               )}
               <div className="p-3">
-                <h3 className="text-[14px] font-semibold text-[#0a3a78]">{p.title}</h3>
-                <p className="mt-1 text-[12px] text-[#3a4d6c]">{p.description}</p>
+                <div className="flex items-baseline justify-between gap-2">
+                  <h3 className="text-[14px] font-semibold text-[#0a3a78]">{p.title}</h3>
+                  {p.period && (
+                    <span className="shrink-0 font-mono text-[10px] text-[#3a4d6c]">
+                      {p.period}
+                    </span>
+                  )}
+                </div>
+                {p.meta && (
+                  <p className="mt-0.5 text-[11px] italic text-[#3a4d6c]">{p.meta}</p>
+                )}
+                <p className="mt-1.5 text-[12px] leading-relaxed text-[#3a4d6c]">
+                  {p.description}
+                </p>
                 <ul className="mt-2 flex flex-wrap gap-1">
                   {p.stack.map((s) => (
                     <li
@@ -52,28 +64,30 @@ export default function Projects() {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-2 flex gap-2 text-[12px]">
-                  {p.github && (
-                    <a
-                      className="rounded border border-[#7da5d8] bg-gradient-to-b from-white to-[#cee] px-2 py-0.5 text-[#0a3a78] hover:brightness-105"
-                      href={p.github}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                    >
-                      GitHub ↗
-                    </a>
-                  )}
-                  {p.demo && (
-                    <a
-                      className="rounded border border-[#7da5d8] bg-gradient-to-b from-white to-[#cee] px-2 py-0.5 text-[#0a3a78] hover:brightness-105"
-                      href={p.demo}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                    >
-                      Live ↗
-                    </a>
-                  )}
-                </div>
+                {(p.github || p.demo) && (
+                  <div className="mt-2 flex gap-2 text-[12px]">
+                    {p.github && (
+                      <a
+                        className="rounded border border-[#7da5d8] bg-gradient-to-b from-white to-[#cee] px-2 py-0.5 text-[#0a3a78] hover:brightness-105"
+                        href={p.github}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                      >
+                        GitHub ↗
+                      </a>
+                    )}
+                    {p.demo && (
+                      <a
+                        className="rounded border border-[#7da5d8] bg-gradient-to-b from-white to-[#cee] px-2 py-0.5 text-[#0a3a78] hover:brightness-105"
+                        href={p.demo}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                      >
+                        Live ↗
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             </li>
           ))}

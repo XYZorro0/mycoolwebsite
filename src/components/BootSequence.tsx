@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useDesktop } from "@/lib/store";
 import { sfx } from "@/lib/sound";
+import { PROFILE } from "@/lib/profile";
 
 type Line = { t: number; text: string; tone?: "ok" | "warn" | "muted" };
 
-const LINES: Line[] = [
+const buildLines = (): Line[] => [
   { t: 0, text: "AwardBIOS v6.00PG · Phoenix Tech, Inc." },
   { t: 80, text: "Copyright (C) 1984-2007, retro-os contributors", tone: "muted" },
   { t: 280, text: "Main Processor : Apple M-Series @ 3.2 GHz" },
@@ -21,12 +22,12 @@ const LINES: Line[] = [
   { t: 1180, text: "  · audio     loaded" },
   { t: 1320, text: "Bringing up loopback ......... [ OK ]", tone: "ok" },
   { t: 1440, text: "Bringing up eth0 (DHCP) ...... [ OK ]", tone: "ok" },
-  { t: 1540, text: "Resolving portfolio.local .... 10.0.0.42" },
+  { t: 1540, text: `Resolving ${PROFILE.hostname} .... 10.0.0.42` },
   { t: 1660, text: "Mounting /home/user .......... [ OK ]", tone: "ok" },
   { t: 1820, text: "Starting Window Manager ...... [ OK ]", tone: "ok" },
   { t: 1980, text: "" },
   { t: 2040, text: "$ whoami" },
-  { t: 2200, text: "  __NAME__" },
+  { t: 2200, text: `  ${PROFILE.name} — ${PROFILE.role}` },
   { t: 2360, text: "$ uptime" },
   { t: 2520, text: "  ready in 0.04s — welcome." },
   { t: 2700, text: "" },
@@ -40,6 +41,7 @@ export default function BootSequence({ onDone }: { onDone: () => void }) {
   const reducedMotion = useDesktop((s) => s.reducedMotion);
   const audioEnabled = useDesktop((s) => s.audioEnabled);
 
+  const lines = useMemo(() => buildLines(), []);
   const [shown, setShown] = useState(0);
   const [phase, setPhase] = useState<"terminal" | "vista" | "done">("terminal");
 
@@ -61,12 +63,12 @@ export default function BootSequence({ onDone }: { onDone: () => void }) {
 
   useEffect(() => {
     if (reducedMotion) {
-      setShown(LINES.length);
+      setShown(lines.length);
       const id = window.setTimeout(() => onDoneRef.current(), 400);
       return () => window.clearTimeout(id);
     }
     const ts: number[] = [];
-    LINES.forEach((line, i) => {
+    lines.forEach((line, i) => {
       ts.push(window.setTimeout(() => setShown(i + 1), line.t));
     });
     ts.push(
@@ -128,7 +130,7 @@ export default function BootSequence({ onDone }: { onDone: () => void }) {
         className="m-0 max-h-full overflow-hidden p-6 font-mono text-[13px] leading-[1.45] tracking-tight md:p-10 md:text-sm"
         aria-live="polite"
       >
-        {LINES.slice(0, shown).map((l, i) => (
+        {lines.slice(0, shown).map((l, i) => (
           <div
             key={i}
             className={
